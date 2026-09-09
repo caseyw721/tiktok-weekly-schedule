@@ -5,58 +5,145 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Weekly Filming Checklist</title>
 <style>
-  :root { color-scheme: light dark; }
+  :root {
+    color-scheme: dark;
+    --bg: #06070c;
+    --bg-grid: rgba(120, 170, 255, .05);
+    --panel: #10121b;
+    --panel-2: #14161f;
+    --border: rgba(140, 170, 255, .14);
+    --text: #eef1fb;
+    --text-dim: rgba(238, 241, 251, .58);
+    --text-faint: rgba(238, 241, 251, .38);
+    --cyan: #35e6ff;
+    --violet: #9b7bff;
+    --amber: #ffb454;
+    --green: #4dffb0;
+  }
   * { box-sizing: border-box; }
   body {
-    margin: 0; padding: 20px 16px 60px;
+    margin: 0; padding: 28px 16px 60px;
     font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: light-dark(#faf9f5, #14110c);
-    color: light-dark(#211a10, #f3ead8);
+    background:
+      radial-gradient(circle at 15% 0%, rgba(53, 230, 255, .07), transparent 40%),
+      radial-gradient(circle at 85% 15%, rgba(155, 123, 255, .07), transparent 45%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
     line-height: 1.5;
   }
   .wrap { max-width: 640px; margin: 0 auto; }
-  h1 { font-size: 22px; margin: 0 0 4px; }
-  .sub { color: light-dark(rgba(33,26,16,.6), rgba(243,234,216,.6)); font-size: 13px; margin: 0 0 24px; }
+  h1 {
+    font-size: 23px; margin: 0 0 6px; letter-spacing: .01em;
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    display: inline-block;
+  }
+  .sub { color: var(--text-dim); font-size: 13px; margin: 0 0 16px; }
+
+  .research {
+    border: 1px solid var(--border); border-radius: 16px;
+    background: linear-gradient(160deg, var(--panel), var(--panel-2));
+    padding: 14px 16px; margin: 0 0 22px;
+  }
+  .research-title {
+    font: 600 10.5px ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase; letter-spacing: .09em; color: var(--cyan);
+    margin: 0 0 8px;
+  }
+  .research ul { margin: 0; padding-left: 18px; }
+  .research li { font-size: 12.5px; color: var(--text-dim); margin-bottom: 4px; }
+  .research li:last-child { margin-bottom: 0; color: var(--text-faint); font-style: italic; }
+
   .slot {
-    border: 1px solid light-dark(rgba(33,26,16,.15), rgba(243,234,216,.15));
-    border-radius: 8px; padding: 16px; margin-bottom: 14px;
-    background: light-dark(#fffbf1, #1d1912);
+    border: 1px solid var(--border); border-radius: 20px; padding: 18px;
+    margin-bottom: 16px;
+    background: linear-gradient(160deg, var(--panel), var(--panel-2));
+    box-shadow: 0 0 0 1px rgba(255,255,255,.02), 0 12px 30px -18px rgba(53,230,255,.15);
+    transition: opacity .2s ease;
   }
-  .slot.done { opacity: .55; }
-  .meta { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
-  .when { font-weight: 600; font-size: 15px; }
+  .slot.done { opacity: .5; }
+
+  .meta { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .when { font-weight: 600; font-size: 15.5px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: -.01em; }
   .fmt {
-    font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
-    padding: 3px 8px; border-radius: 999px;
-    background: light-dark(#efe6d2, #241f16);
-    color: light-dark(#9c6c14, #d1a13a);
+    font: 700 10.5px ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase; letter-spacing: .07em;
+    padding: 4px 11px; border-radius: 999px; border: 1px solid;
+    white-space: nowrap;
   }
-  .hint { font-size: 13px; color: light-dark(rgba(33,26,16,.65), rgba(243,234,216,.65)); margin: 6px 0 12px; }
+  .fmt-verse { color: var(--cyan); border-color: rgba(53,230,255,.4); background: rgba(53,230,255,.08); }
+  .fmt-opinion { color: var(--violet); border-color: rgba(155,123,255,.4); background: rgba(155,123,255,.08); }
+  .fmt-bts { color: var(--amber); border-color: rgba(255,180,84,.4); background: rgba(255,180,84,.08); }
+
+  .viral { margin-bottom: 12px; }
+  .viral-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+  .viral-label {
+    font: 600 10px ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--text-faint);
+  }
+  .viral-value {
+    font: 800 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #05060a; padding: 2px 10px; border-radius: 999px;
+  }
+  .viral-track { height: 6px; border-radius: 999px; background: rgba(255,255,255,.06); overflow: hidden; }
+  .viral-fill { height: 100%; border-radius: 999px; }
+  .band-vhigh .viral-value, .band-vhigh .viral-fill { background: linear-gradient(90deg, var(--cyan), var(--green)); }
+  .band-high .viral-value, .band-high .viral-fill { background: linear-gradient(90deg, var(--cyan), #5fb8ff); }
+  .band-modhigh .viral-value, .band-modhigh .viral-fill { background: linear-gradient(90deg, var(--violet), #c78bff); }
+  .band-mod .viral-value, .band-mod .viral-fill { background: linear-gradient(90deg, var(--amber), #ffd479); }
+
+  .hint { font-size: 13.5px; color: var(--text); margin: 0 0 10px; }
+
+  .why {
+    border: 1px solid var(--border); border-radius: 12px;
+    background: rgba(255,255,255,.02);
+    padding: 10px 12px; margin: 0 0 14px;
+  }
+  .why-title {
+    font: 600 10px ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--cyan);
+    margin: 0 0 5px;
+  }
+  .why p { margin: 0 0 4px; font-size: 12px; color: var(--text-dim); }
+  .why p:last-child { margin-bottom: 0; }
+
   .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-  input[type="file"] {
-    font-size: 13px; flex: 1; min-width: 160px;
+  input[type="file"] { font-size: 13px; flex: 1; min-width: 160px; color: var(--text-dim); }
+  input[type="file"]::file-selector-button {
+    font: inherit; padding: 7px 12px; margin-right: 10px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--cyan);
+    cursor: pointer;
   }
   textarea {
     width: 100%; min-height: 56px; resize: vertical;
-    font: inherit; padding: 8px; border-radius: 6px;
-    border: 1px solid light-dark(rgba(33,26,16,.2), rgba(243,234,216,.2));
-    background: light-dark(#fff, #14110c); color: inherit;
+    font: inherit; padding: 10px 12px; border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,.25); color: var(--text);
   }
-  .caption-note { font-size: 11.5px; color: light-dark(rgba(33,26,16,.5), rgba(243,234,216,.5)); margin: 4px 0 10px; }
+  textarea:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(53,230,255,.12); }
+  .caption-note { font-size: 11.5px; color: var(--text-faint); margin: 5px 0 12px; }
   .checks { display: flex; gap: 18px; font-size: 13px; }
-  .checks label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-  footer { text-align: center; font-size: 11.5px; color: light-dark(rgba(33,26,16,.4), rgba(243,234,216,.4)); margin-top: 30px; }
+  .checks label { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-dim); }
+  .checks input[type="checkbox"] { accent-color: var(--cyan); width: 15px; height: 15px; }
+  footer { text-align: center; font-size: 11px; color: var(--text-faint); margin-top: 30px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Weekly Filming Checklist</h1>
   <p class="sub">Write the caption before you record — the saved filename picks it up when you tap the camera button. Auto-generated, do not hand-edit; regenerate with <code>python -m scheduler.weekly_page</code>.</p>
+
+  <div class="research">
+    <p class="research-title">Research basis</p>
+    <ul><li>51% of top-performing videos in the dataset scan ran ≤15 seconds — short-form dominates.</li><li>94% of top-performing videos were driven primarily by shares, not likes or comments.</li><li>Estimates come from a static historical dataset (Feb 2024–Mar 2025 snapshot) — directional, not a guarantee, and blind to current trends.</li></ul>
+  </div>
+
   <div id="slots"></div>
-  <footer>Generated 2026-09-09 15:38 PDT</footer>
+  <footer>Generated 2026-09-09 16:08 PDT</footer>
 </div>
 
-<script id="slot-data" type="application/json">[{"slot_id": "2026-09-17-Verse", "datetime": "2026-09-17T17:00:00-04:00", "format": "Verse", "hint": "One breath challenge \u2014 Perform a dense sequence and ask viewers where you took a breath, or whether they could do it in one."}, {"slot_id": "2026-09-18-Verse", "datetime": "2026-09-18T17:00:00-04:00", "format": "Verse", "hint": "\"Could you rap this?\" \u2014 Post an instrumental or section with scrolling lyrics/rhythm markers and invite people to duet or stitch it."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T11:00:00-04:00", "format": "Opinion", "hint": "News juxtaposition \u2014 Put a relevant headline on screen while a thematically connected section of the song plays underneath."}, {"slot_id": "2026-09-19-Verse", "datetime": "2026-09-19T14:00:00-04:00", "format": "Verse", "hint": "Two meanings \u2014 Put a lyric with two meanings on screen, play the section with no explanation, and let the comments debate it."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T17:00:00-04:00", "format": "Opinion", "hint": "\"I can't believe I wrote this\" \u2014 React on camera to one of your older bars, whether it's great, embarrassing, or oddly prophetic."}, {"slot_id": "2026-09-20-BTS", "datetime": "2026-09-20T23:00:00-04:00", "format": "BTS", "hint": "Dry vocal \u2192 finished vocal \u2014 Start on a totally dry vocal take, then switch to the full vocal chain and mix \u2014 make the before/after obvious."}]</script>
+<script id="slot-data" type="application/json">[{"slot_id": "2026-09-17-Verse", "datetime": "2026-09-17T17:00:00-04:00", "format": "Verse", "hint": "One breath challenge \u2014 Perform a dense sequence and ask viewers where you took a breath, or whether they could do it in one.", "viral_score": 87, "viral_label": "High", "viral_band": "high", "why_timing": "Thu 5pm ET is the single strongest window in the full dataset scan, outperforming every other slot by more than the 10% tie-break margin.", "why_hook": "Skill display plus a direct question creates a pattern-interrupt hook and pulls comments \u2014 the #2 engagement signal behind shares in the dataset scan."}, {"slot_id": "2026-09-18-Verse", "datetime": "2026-09-18T17:00:00-04:00", "format": "Verse", "hint": "\u201cCould you rap this?\u201d \u2014 Post an instrumental or section with scrolling lyrics/rhythm markers and invite people to duet or stitch it.", "viral_score": 85, "viral_label": "High", "viral_band": "high", "why_timing": "Fri 4\u20136pm ET recurs as a top-tier engagement window in the aggregate scan, just behind Thursday's dominant slot.", "why_hook": "Duet/stitch bait turns a passive viewer into a participant \u2014 the closest on-platform analog to a share, which drove 94% of the dataset's top performers."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T11:00:00-04:00", "format": "Opinion", "hint": "News juxtaposition \u2014 Put a relevant headline on screen while a thematically connected section of the song plays underneath.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sat late-morning is one of the most consistently recurring high-engagement windows across the scan.", "why_hook": "Pairs a pattern-interrupt (an unexpected headline) with self-relevance to a live event \u2014 a proven combination from the first-3-seconds hook research."}, {"slot_id": "2026-09-19-Verse", "datetime": "2026-09-19T14:00:00-04:00", "format": "Verse", "hint": "Two meanings \u2014 Put a lyric with two meanings on screen, play the section with no explanation, and let the comments debate it.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sat afternoon is one of four recurring Saturday high-engagement windows the aggregate scan turned up.", "why_hook": "A curiosity-gap hook (unexplained ambiguity) reliably sparks comment debate \u2014 the hip-hop-specific mining pass found comment-drawing formats sustain engagement."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T17:00:00-04:00", "format": "Opinion", "hint": "\u201cI can't believe I wrote this\u201d \u2014 React on camera to one of your older bars, whether it's great, embarrassing, or oddly prophetic.", "viral_score": 82, "viral_label": "High", "viral_band": "high", "why_timing": "Sat 5pm ET recurs alongside the late-morning and afternoon Saturday windows in the aggregate scan.", "why_hook": "A vulnerable, personal moment on camera \u2014 the shares-psychology research's core driver \u2014 paired with a natural, unforced intro into your own catalog."}, {"slot_id": "2026-09-20-BTS", "datetime": "2026-09-20T23:00:00-04:00", "format": "BTS", "hint": "Dry vocal \u2192 finished vocal \u2014 Start on a totally dry vocal take, then switch to the full vocal chain and mix \u2014 make the before/after obvious.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sun 11pm ET is a recurring late-night window in the scan, present but slightly less dominant than the Thu/Sat windows.", "why_hook": "A blunt before/after payoff is a strong curiosity-to-resolution hook, and a dry-vocal contrast is instantly legible \u2014 even to non-musicians."}]</script>
 <script>
 (function () {
   function safeGet(key) {
@@ -84,6 +171,8 @@
     });
   }
 
+  var FMT_CLASS = { "Verse": "fmt-verse", "Opinion": "fmt-opinion", "BTS": "fmt-bts" };
+
   var slots = JSON.parse(document.getElementById("slot-data").textContent);
   var container = document.getElementById("slots");
 
@@ -98,8 +187,16 @@
 
     el.innerHTML =
       '<div class="meta"><span class="when">' + formatWhen(slot.datetime) + '</span>' +
-      '<span class="fmt">' + slot.format + '</span></div>' +
+      '<span class="fmt ' + (FMT_CLASS[slot.format] || "") + '">' + slot.format + '</span></div>' +
+      '<div class="viral band-' + slot.viral_band + '">' +
+      '<div class="viral-row"><span class="viral-label">Est. Viral Signal</span>' +
+      '<span class="viral-value">' + slot.viral_score + '/100 · ' + slot.viral_label + '</span></div>' +
+      '<div class="viral-track"><div class="viral-fill" style="width:' + slot.viral_score + '%"></div></div>' +
+      '</div>' +
       '<p class="hint">' + slot.hint + '</p>' +
+      '<div class="why"><p class="why-title">Why this works</p>' +
+      '<p>' + slot.why_hook + '</p>' +
+      '<p>' + slot.why_timing + '</p></div>' +
       '<div class="row">' +
       '<input type="file" accept="video/*" capture="user">' +
       '</div>' +
