@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weekly Filming Checklist</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px 16px 60px;
+    font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: light-dark(#faf9f5, #14110c);
+    color: light-dark(#211a10, #f3ead8);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: light-dark(rgba(33,26,16,.6), rgba(243,234,216,.6)); font-size: 13px; margin: 0 0 24px; }
+  .slot {
+    border: 1px solid light-dark(rgba(33,26,16,.15), rgba(243,234,216,.15));
+    border-radius: 8px; padding: 16px; margin-bottom: 14px;
+    background: light-dark(#fffbf1, #1d1912);
+  }
+  .slot.done { opacity: .55; }
+  .meta { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .when { font-weight: 600; font-size: 15px; }
+  .fmt {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+    padding: 3px 8px; border-radius: 999px;
+    background: light-dark(#efe6d2, #241f16);
+    color: light-dark(#9c6c14, #d1a13a);
+  }
+  .hint { font-size: 13px; color: light-dark(rgba(33,26,16,.65), rgba(243,234,216,.65)); margin: 6px 0 12px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  input[type="file"] {
+    font-size: 13px; flex: 1; min-width: 160px;
+  }
+  textarea {
+    width: 100%; min-height: 56px; resize: vertical;
+    font: inherit; padding: 8px; border-radius: 6px;
+    border: 1px solid light-dark(rgba(33,26,16,.2), rgba(243,234,216,.2));
+    background: light-dark(#fff, #14110c); color: inherit;
+  }
+  .caption-note { font-size: 11.5px; color: light-dark(rgba(33,26,16,.5), rgba(243,234,216,.5)); margin: 4px 0 10px; }
+  .checks { display: flex; gap: 18px; font-size: 13px; }
+  .checks label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  footer { text-align: center; font-size: 11.5px; color: light-dark(rgba(33,26,16,.4), rgba(243,234,216,.4)); margin-top: 30px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Weekly Filming Checklist</h1>
+  <p class="sub">Write the caption before you record — the saved filename picks it up when you tap the camera button. Auto-generated, do not hand-edit; regenerate with <code>python -m scheduler.weekly_page</code>.</p>
+  <div id="slots"></div>
+  <footer>Generated 2026-09-09 13:36 PDT</footer>
+</div>
+
+<script id="slot-data" type="application/json">[{"slot_id": "2026-09-17-Verse", "datetime": "2026-09-17T17:00:00-04:00", "format": "Verse", "hint": "Direct-to-camera rap verse \u2014 car or public, tight frame."}, {"slot_id": "2026-09-18-Verse", "datetime": "2026-09-18T17:00:00-04:00", "format": "Verse", "hint": "Direct-to-camera rap verse \u2014 car or public, tight frame."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T11:00:00-04:00", "format": "Opinion", "hint": "Commentary on music, grounded in something that actually happened to you."}, {"slot_id": "2026-09-19-Verse", "datetime": "2026-09-19T14:00:00-04:00", "format": "Verse", "hint": "Direct-to-camera rap verse \u2014 car or public, tight frame."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T17:00:00-04:00", "format": "Opinion", "hint": "Commentary on music, grounded in something that actually happened to you."}, {"slot_id": "2026-09-20-BTS", "datetime": "2026-09-20T23:00:00-04:00", "format": "BTS", "hint": "Raw production/before-after \u2014 say out loud how it came together."}]</script>
+<script>
+(function () {
+  function safeGet(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function safeSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) {}
+  }
+
+  function buildFilename(format, captionText, isoDatetime) {
+    var slug = (captionText || "").trim().toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .slice(0, 60) || "untitled";
+    var datePart = isoDatetime.slice(0, 10);
+    return format + "_" + slug + "_" + datePart + ".mp4";
+  }
+
+  function formatWhen(iso) {
+    var d = new Date(iso);
+    return d.toLocaleString("en-US", {
+      weekday: "short", month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit",
+      timeZone: "America/Los_Angeles", timeZoneName: "short"
+    });
+  }
+
+  var slots = JSON.parse(document.getElementById("slot-data").textContent);
+  var container = document.getElementById("slots");
+
+  slots.forEach(function (slot) {
+    var el = document.createElement("div");
+    el.className = "slot";
+    el.id = "slot-" + slot.slot_id;
+
+    var captionKey = "caption-" + slot.slot_id;
+    var filmedKey = "filmed-" + slot.slot_id;
+    var postedKey = "posted-" + slot.slot_id;
+
+    el.innerHTML =
+      '<div class="meta"><span class="when">' + formatWhen(slot.datetime) + '</span>' +
+      '<span class="fmt">' + slot.format + '</span></div>' +
+      '<p class="hint">' + slot.hint + '</p>' +
+      '<div class="row">' +
+      '<input type="file" accept="video/*" capture="user">' +
+      '</div>' +
+      '<textarea placeholder="Caption / notes…"></textarea>' +
+      '<p class="caption-note">Filename uses whatever’s in this box when you tap the camera button above.</p>' +
+      '<div class="checks">' +
+      '<label><input type="checkbox" class="filmed-cb"> Filmed</label>' +
+      '<label><input type="checkbox" class="posted-cb"> Posted</label>' +
+      '</div>';
+
+    var fileInput = el.querySelector('input[type="file"]');
+    var textarea = el.querySelector("textarea");
+    var filmedCb = el.querySelector(".filmed-cb");
+    var postedCb = el.querySelector(".posted-cb");
+
+    textarea.value = safeGet(captionKey) || "";
+    filmedCb.checked = safeGet(filmedKey) === "1";
+    postedCb.checked = safeGet(postedKey) === "1";
+    if (filmedCb.checked) el.classList.add("done");
+
+    textarea.addEventListener("input", function () {
+      safeSet(captionKey, textarea.value);
+    });
+    filmedCb.addEventListener("change", function () {
+      safeSet(filmedKey, filmedCb.checked ? "1" : "0");
+      el.classList.toggle("done", filmedCb.checked);
+    });
+    postedCb.addEventListener("change", function () {
+      safeSet(postedKey, postedCb.checked ? "1" : "0");
+    });
+
+    // Must fire synchronously inside this event handler (no await/timeout
+    // before .click()) -- iOS Safari silently drops the download otherwise.
+    fileInput.addEventListener("change", function () {
+      var file = fileInput.files[0];
+      if (!file) return;
+      var filename = buildFilename(slot.format, textarea.value, slot.datetime);
+      var url = URL.createObjectURL(file);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+    });
+
+    container.appendChild(el);
+  });
+})();
+</script>
+</body>
+</html>
