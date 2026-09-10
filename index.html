@@ -108,13 +108,23 @@
   .why p { margin: 0 0 4px; font-size: 12px; color: var(--text-dim); }
   .why p:last-child { margin-bottom: 0; }
 
-  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-  input[type="file"] { font-size: 13px; flex: 1; min-width: 160px; color: var(--text-dim); }
-  input[type="file"]::file-selector-button {
-    font: inherit; padding: 7px 12px; margin-right: 10px; border-radius: 10px;
-    border: 1px solid var(--border); background: var(--panel-2); color: var(--cyan);
-    cursor: pointer;
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .camera-btn {
+    font: 600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 9px 16px; border-radius: 999px; cursor: pointer;
+    border: 1px solid rgba(53,230,255,.4);
+    background: linear-gradient(160deg, rgba(53,230,255,.14), rgba(155,123,255,.1));
+    color: var(--cyan);
   }
+  .camera-btn:active { background: linear-gradient(160deg, rgba(53,230,255,.24), rgba(155,123,255,.18)); }
+  .file-status { font-size: 12px; color: var(--text-faint); }
+  .thumb-row { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+  .thumb {
+    width: 54px; height: 96px; object-fit: cover; border-radius: 10px;
+    border: 1px solid var(--border); cursor: pointer; background: #000;
+  }
+  .thumb-label { font-size: 12px; color: var(--cyan); cursor: pointer; }
+  .preview-video { width: 100%; max-height: 420px; border-radius: 14px; margin: 0 0 12px; background: #000; }
   textarea {
     width: 100%; min-height: 56px; resize: vertical;
     font: inherit; padding: 10px 12px; border-radius: 12px;
@@ -140,7 +150,7 @@
   </div>
 
   <div id="slots"></div>
-  <footer>Generated 2026-09-09 16:08 PDT</footer>
+  <footer>Generated 2026-09-09 19:29 PDT</footer>
 </div>
 
 <script id="slot-data" type="application/json">[{"slot_id": "2026-09-17-Verse", "datetime": "2026-09-17T17:00:00-04:00", "format": "Verse", "hint": "One breath challenge \u2014 Perform a dense sequence and ask viewers where you took a breath, or whether they could do it in one.", "viral_score": 87, "viral_label": "High", "viral_band": "high", "why_timing": "Thu 5pm ET is the single strongest window in the full dataset scan, outperforming every other slot by more than the 10% tie-break margin.", "why_hook": "Skill display plus a direct question creates a pattern-interrupt hook and pulls comments \u2014 the #2 engagement signal behind shares in the dataset scan."}, {"slot_id": "2026-09-18-Verse", "datetime": "2026-09-18T17:00:00-04:00", "format": "Verse", "hint": "\u201cCould you rap this?\u201d \u2014 Post an instrumental or section with scrolling lyrics/rhythm markers and invite people to duet or stitch it.", "viral_score": 85, "viral_label": "High", "viral_band": "high", "why_timing": "Fri 4\u20136pm ET recurs as a top-tier engagement window in the aggregate scan, just behind Thursday's dominant slot.", "why_hook": "Duet/stitch bait turns a passive viewer into a participant \u2014 the closest on-platform analog to a share, which drove 94% of the dataset's top performers."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T11:00:00-04:00", "format": "Opinion", "hint": "News juxtaposition \u2014 Put a relevant headline on screen while a thematically connected section of the song plays underneath.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sat late-morning is one of the most consistently recurring high-engagement windows across the scan.", "why_hook": "Pairs a pattern-interrupt (an unexpected headline) with self-relevance to a live event \u2014 a proven combination from the first-3-seconds hook research."}, {"slot_id": "2026-09-19-Verse", "datetime": "2026-09-19T14:00:00-04:00", "format": "Verse", "hint": "Two meanings \u2014 Put a lyric with two meanings on screen, play the section with no explanation, and let the comments debate it.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sat afternoon is one of four recurring Saturday high-engagement windows the aggregate scan turned up.", "why_hook": "A curiosity-gap hook (unexplained ambiguity) reliably sparks comment debate \u2014 the hip-hop-specific mining pass found comment-drawing formats sustain engagement."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T17:00:00-04:00", "format": "Opinion", "hint": "\u201cI can't believe I wrote this\u201d \u2014 React on camera to one of your older bars, whether it's great, embarrassing, or oddly prophetic.", "viral_score": 82, "viral_label": "High", "viral_band": "high", "why_timing": "Sat 5pm ET recurs alongside the late-morning and afternoon Saturday windows in the aggregate scan.", "why_hook": "A vulnerable, personal moment on camera \u2014 the shares-psychology research's core driver \u2014 paired with a natural, unforced intro into your own catalog."}, {"slot_id": "2026-09-20-BTS", "datetime": "2026-09-20T23:00:00-04:00", "format": "BTS", "hint": "Dry vocal \u2192 finished vocal \u2014 Start on a totally dry vocal take, then switch to the full vocal chain and mix \u2014 make the before/after obvious.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sun 11pm ET is a recurring late-night window in the scan, present but slightly less dominant than the Thu/Sat windows.", "why_hook": "A blunt before/after payoff is a strong curiosity-to-resolution hook, and a dry-vocal contrast is instantly legible \u2014 even to non-musicians."}]</script>
@@ -173,6 +183,78 @@
 
   var FMT_CLASS = { "Verse": "fmt-verse", "Opinion": "fmt-opinion", "BTS": "fmt-bts" };
 
+  // On-device video storage: the recorded clip's bytes go in IndexedDB
+  // (roomier than localStorage) keyed by slot_id, purely so this same
+  // browser can show a thumbnail/preview confirming a slot is done. Nothing
+  // here ever leaves the device -- no network request, no repo commit.
+  var _dbPromise = null;
+  function openDB() {
+    if (_dbPromise) return _dbPromise;
+    _dbPromise = new Promise(function (resolve, reject) {
+      if (!window.indexedDB) { reject(new Error("no indexedDB")); return; }
+      var req = indexedDB.open("tiktok-checklist", 1);
+      req.onupgradeneeded = function () { req.result.createObjectStore("videos"); };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { reject(req.error); };
+    });
+    return _dbPromise;
+  }
+  function saveVideo(slotId, blob) {
+    return openDB().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction("videos", "readwrite");
+        tx.objectStore("videos").put(blob, slotId);
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    });
+  }
+  function loadVideo(slotId) {
+    return openDB().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction("videos", "readonly");
+        var req = tx.objectStore("videos").get(slotId);
+        req.onsuccess = function () { resolve(req.result || null); };
+        req.onerror = function () { reject(req.error); };
+      });
+    });
+  }
+
+  // Grabs a frame ~0.3s in (or 1/4 of the way through short clips) and
+  // downscales it to a small JPEG data URL cheap enough to keep in
+  // localStorage so the thumbnail renders instantly on next page load.
+  function makeThumbnail(blob) {
+    return new Promise(function (resolve, reject) {
+      var video = document.createElement("video");
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+      var objectUrl = URL.createObjectURL(blob);
+      video.src = objectUrl;
+
+      function fail(err) { URL.revokeObjectURL(objectUrl); reject(err); }
+      video.addEventListener("error", function () { fail(new Error("video load failed")); });
+      video.addEventListener("loadedmetadata", function () {
+        try { video.currentTime = Math.min(0.3, (video.duration || 1) / 4); }
+        catch (e) { draw(); }
+      });
+      video.addEventListener("seeked", draw);
+
+      function draw() {
+        try {
+          var w = video.videoWidth || 360, h = video.videoHeight || 640;
+          var canvas = document.createElement("canvas");
+          canvas.width = 240;
+          canvas.height = Math.round(h * (240 / w));
+          canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+          var dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+          URL.revokeObjectURL(objectUrl);
+          resolve(dataUrl);
+        } catch (e) { fail(e); }
+      }
+    });
+  }
+
   var slots = JSON.parse(document.getElementById("slot-data").textContent);
   var container = document.getElementById("slots");
 
@@ -198,24 +280,62 @@
       '<p>' + slot.why_hook + '</p>' +
       '<p>' + slot.why_timing + '</p></div>' +
       '<div class="row">' +
-      '<input type="file" accept="video/*" capture="user">' +
+      '<button type="button" class="camera-btn">🎥 Open Camera</button>' +
+      '<span class="file-status">No video yet</span>' +
+      '<input type="file" accept="video/*" capture="user" hidden>' +
       '</div>' +
+      '<div class="thumb-row" hidden>' +
+      '<img class="thumb" alt="Recorded clip thumbnail">' +
+      '<span class="thumb-label">Tap to preview</span>' +
+      '</div>' +
+      '<video class="preview-video" controls playsinline hidden></video>' +
       '<textarea placeholder="Caption / notes…"></textarea>' +
-      '<p class="caption-note">Filename uses whatever’s in this box when you tap the camera button above.</p>' +
+      '<p class="caption-note">Filename uses whatever’s in this box when you tap the camera button above. The thumbnail/preview is stored only in this browser — never uploaded anywhere.</p>' +
       '<div class="checks">' +
       '<label><input type="checkbox" class="filmed-cb"> Filmed</label>' +
       '<label><input type="checkbox" class="posted-cb"> Posted</label>' +
       '</div>';
 
     var fileInput = el.querySelector('input[type="file"]');
+    var cameraBtn = el.querySelector(".camera-btn");
+    var fileStatus = el.querySelector(".file-status");
+    var thumbRow = el.querySelector(".thumb-row");
+    var thumbImg = el.querySelector(".thumb");
+    var previewVideo = el.querySelector(".preview-video");
     var textarea = el.querySelector("textarea");
     var filmedCb = el.querySelector(".filmed-cb");
     var postedCb = el.querySelector(".posted-cb");
+
+    cameraBtn.addEventListener("click", function () {
+      fileInput.click();
+    });
+
+    function showThumb(dataUrl) {
+      thumbImg.src = dataUrl;
+      thumbRow.hidden = false;
+    }
+
+    thumbImg.addEventListener("click", function () {
+      if (!previewVideo.hidden) {
+        previewVideo.pause();
+        previewVideo.hidden = true;
+        return;
+      }
+      loadVideo(slot.slot_id).then(function (blob) {
+        if (!blob) return;
+        previewVideo.src = URL.createObjectURL(blob);
+        previewVideo.hidden = false;
+        previewVideo.play().catch(function () {});
+      }).catch(function () {});
+    });
 
     textarea.value = safeGet(captionKey) || "";
     filmedCb.checked = safeGet(filmedKey) === "1";
     postedCb.checked = safeGet(postedKey) === "1";
     if (filmedCb.checked) el.classList.add("done");
+
+    var cachedThumb = safeGet("thumb-" + slot.slot_id);
+    if (cachedThumb) showThumb(cachedThumb);
 
     textarea.addEventListener("input", function () {
       safeSet(captionKey, textarea.value);
@@ -234,6 +354,7 @@
       var file = fileInput.files[0];
       if (!file) return;
       var filename = buildFilename(slot.format, textarea.value, slot.datetime);
+      fileStatus.textContent = "Saved as " + filename;
       var url = URL.createObjectURL(file);
       var a = document.createElement("a");
       a.href = url;
@@ -242,6 +363,21 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+
+      // Thumbnail + on-device storage are best-effort and happen after the
+      // download above -- if this fails (old browser, private mode, low
+      // storage) the take itself is still safe on the phone.
+      makeThumbnail(file).then(function (dataUrl) {
+        safeSet("thumb-" + slot.slot_id, dataUrl);
+        showThumb(dataUrl);
+        return saveVideo(slot.slot_id, file);
+      }).then(function () {
+        if (!filmedCb.checked) {
+          filmedCb.checked = true;
+          safeSet(filmedKey, "1");
+          el.classList.add("done");
+        }
+      }).catch(function () {});
     });
 
     container.appendChild(el);
