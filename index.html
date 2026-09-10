@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Weekly Filming Checklist</title>
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js"></script>
 <style>
   :root {
     color-scheme: dark;
@@ -137,6 +138,122 @@
   .checks label { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-dim); }
   .checks input[type="checkbox"] { accent-color: var(--cyan); width: 15px; height: 15px; }
   footer { text-align: center; font-size: 11px; color: var(--text-faint); margin-top: 30px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* Editor modal */
+  .editor-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(4,5,9,.85); backdrop-filter: blur(4px);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .editor-panel {
+    width: 100%; max-width: 640px; max-height: 94vh;
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--border); border-bottom: none;
+    border-radius: 22px 22px 0 0;
+    display: flex; flex-direction: column;
+    box-shadow: 0 -20px 60px -20px rgba(53,230,255,.15);
+  }
+  .editor-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px; border-bottom: 1px solid var(--border);
+  }
+  .editor-title { font-weight: 700; font-size: 15px; }
+  .editor-close {
+    background: none; border: none; color: var(--text-dim); font-size: 18px;
+    cursor: pointer; padding: 4px 8px; border-radius: 8px;
+  }
+  .editor-body { overflow-y: auto; padding: 16px 18px; flex: 1; }
+  .editor-section { margin-bottom: 20px; }
+  .editor-section-title {
+    font: 700 10.5px ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--cyan); margin: 0 0 8px;
+  }
+  .editor-timeline-info { font-size: 11.5px; color: var(--text-faint); margin: 6px 0 0; }
+
+  .take-row {
+    display: flex; gap: 10px; border: 1px solid var(--border); border-radius: 14px;
+    padding: 10px; margin-bottom: 10px; background: rgba(255,255,255,.02);
+  }
+  .take-preview { width: 84px; height: 148px; border-radius: 10px; object-fit: cover; background: #000; flex-shrink: 0; }
+  .take-controls { flex: 1; min-width: 0; }
+  .take-meta { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+  .take-trim { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .take-trim label { font-size: 11px; color: var(--text-faint); display: flex; align-items: center; gap: 4px; }
+  .take-trim input[type="number"] {
+    width: 56px; font: inherit; font-size: 12px; padding: 4px 6px; border-radius: 7px;
+    border: 1px solid var(--border); background: rgba(0,0,0,.3); color: var(--text);
+  }
+  .take-trim button, .take-actions button {
+    font-size: 11px; padding: 4px 9px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--panel-2); color: var(--cyan); cursor: pointer;
+  }
+  .take-actions { display: flex; gap: 6px; }
+  .take-actions button { color: var(--text-dim); }
+
+  .editor-add-btn {
+    font: 600 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    border: 1px dashed var(--border); background: transparent; color: var(--cyan); width: 100%;
+  }
+
+  .caption-row {
+    border: 1px solid var(--border); border-radius: 14px; padding: 10px;
+    margin-bottom: 10px; background: rgba(255,255,255,.02);
+  }
+  .caption-row input[type="text"] {
+    width: 100%; font: inherit; padding: 8px 10px; border-radius: 9px; margin-bottom: 8px;
+    border: 1px solid var(--border); background: rgba(0,0,0,.3); color: var(--text);
+  }
+  .caption-timing { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .caption-timing label { font-size: 11px; color: var(--text-faint); display: flex; align-items: center; gap: 4px; }
+  .caption-timing input[type="number"] {
+    width: 52px; font: inherit; font-size: 12px; padding: 4px 6px; border-radius: 7px;
+    border: 1px solid var(--border); background: rgba(0,0,0,.3); color: var(--text);
+  }
+  .caption-timing select {
+    font: inherit; font-size: 12px; padding: 4px 6px; border-radius: 7px;
+    border: 1px solid var(--border); background: rgba(0,0,0,.3); color: var(--text);
+  }
+  .caption-delete {
+    margin-left: auto; background: none; border: 1px solid var(--border); color: var(--amber);
+    border-radius: 8px; padding: 4px 9px; cursor: pointer; font-size: 12px;
+  }
+
+  .editor-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-dim); margin-bottom: 10px; cursor: pointer; }
+  .editor-check input { accent-color: var(--cyan); width: 15px; height: 15px; }
+  .music-name { font-size: 12.5px; color: var(--text-dim); }
+  #editor-music-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .music-volume { accent-color: var(--cyan); }
+  .music-remove {
+    font-size: 11px; padding: 4px 9px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--panel-2); color: var(--amber); cursor: pointer;
+  }
+
+  .editor-status { font-size: 12.5px; color: var(--text-dim); min-height: 16px; margin: 4px 0; }
+  .editor-progress { height: 8px; border-radius: 999px; background: rgba(255,255,255,.07); overflow: hidden; margin: 6px 0 10px; }
+  .editor-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--cyan), var(--violet)); transition: width .2s ease; }
+  .editor-log-toggle {
+    font-size: 11.5px; color: var(--text-faint); background: none; border: none; cursor: pointer;
+    text-decoration: underline; padding: 0; margin-bottom: 8px;
+  }
+  .editor-log {
+    max-height: 160px; overflow-y: auto; font-size: 10.5px; line-height: 1.4;
+    background: rgba(0,0,0,.35); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 10px; color: var(--text-faint); white-space: pre-wrap; word-break: break-word;
+  }
+
+  .editor-footer { display: flex; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border); }
+  .editor-btn {
+    flex: 1; font: 700 13.5px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 12px; border-radius: 999px; cursor: pointer; border: 1px solid var(--border);
+  }
+  .editor-btn-ghost { background: transparent; color: var(--text-dim); }
+  .editor-btn-primary {
+    background: linear-gradient(90deg, var(--cyan), var(--violet)); color: #05060a; border: none;
+  }
+  .editor-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .editor-review { display: flex; flex-direction: column; }
+  .editor-review-video { width: 100%; max-height: 55vh; background: #000; }
 </style>
 </head>
 <body>
@@ -150,7 +267,55 @@
   </div>
 
   <div id="slots"></div>
-  <footer>Generated 2026-09-09 19:29 PDT</footer>
+
+  <div class="editor-overlay" id="editor-overlay" hidden>
+    <div class="editor-panel">
+      <div class="editor-header">
+        <span class="editor-title" id="editor-title">Edit Clip</span>
+        <button type="button" class="editor-close" id="editor-close" aria-label="Close">✕</button>
+      </div>
+      <div class="editor-body" id="editor-body">
+        <div id="editor-edit-sections">
+          <div class="editor-section">
+            <p class="editor-section-title">Takes</p>
+            <div id="editor-takes"></div>
+            <button type="button" class="editor-add-btn" id="editor-add-take">+ Add another take</button>
+            <input type="file" accept="video/*" capture="user" hidden id="editor-take-input">
+            <p class="editor-timeline-info" id="editor-timeline-info">Combined length so far: 0.0s</p>
+          </div>
+          <div class="editor-section">
+            <p class="editor-section-title">Captions</p>
+            <div id="editor-captions"></div>
+            <button type="button" class="editor-add-btn" id="editor-add-caption">+ Add caption</button>
+          </div>
+          <div class="editor-section">
+            <p class="editor-section-title">Audio</p>
+            <label class="editor-check"><input type="checkbox" id="editor-mute"> Mute original audio</label>
+            <div id="editor-music-row"></div>
+            <button type="button" class="editor-add-btn" id="editor-add-music">+ Add background music</button>
+            <input type="file" accept="audio/*" hidden id="editor-music-input">
+          </div>
+        </div>
+        <div class="editor-status" id="editor-status"></div>
+        <div class="editor-progress" id="editor-progress" hidden><div class="editor-progress-fill" id="editor-progress-fill"></div></div>
+        <button type="button" class="editor-log-toggle" id="editor-log-toggle" hidden>Show technical log</button>
+        <pre class="editor-log" id="editor-log" hidden></pre>
+        <div class="editor-review" id="editor-review" hidden>
+          <video class="editor-review-video" id="editor-review-video" controls playsinline></video>
+        </div>
+      </div>
+      <div class="editor-footer" id="editor-footer">
+        <button type="button" class="editor-btn editor-btn-ghost" id="editor-cancel">Cancel</button>
+        <button type="button" class="editor-btn editor-btn-primary" id="editor-export">Export</button>
+      </div>
+      <div class="editor-footer" id="editor-review-footer" hidden>
+        <button type="button" class="editor-btn editor-btn-ghost" id="editor-redo">Back to edit</button>
+        <button type="button" class="editor-btn editor-btn-primary" id="editor-use">Use this</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Generated 2026-09-10 00:22 PDT</footer>
 </div>
 
 <script id="slot-data" type="application/json">[{"slot_id": "2026-09-17-Verse", "datetime": "2026-09-17T17:00:00-04:00", "format": "Verse", "hint": "One breath challenge \u2014 Perform a dense sequence and ask viewers where you took a breath, or whether they could do it in one.", "viral_score": 87, "viral_label": "High", "viral_band": "high", "why_timing": "Thu 5pm ET is the single strongest window in the full dataset scan, outperforming every other slot by more than the 10% tie-break margin.", "why_hook": "Skill display plus a direct question creates a pattern-interrupt hook and pulls comments \u2014 the #2 engagement signal behind shares in the dataset scan."}, {"slot_id": "2026-09-18-Verse", "datetime": "2026-09-18T17:00:00-04:00", "format": "Verse", "hint": "\u201cCould you rap this?\u201d \u2014 Post an instrumental or section with scrolling lyrics/rhythm markers and invite people to duet or stitch it.", "viral_score": 85, "viral_label": "High", "viral_band": "high", "why_timing": "Fri 4\u20136pm ET recurs as a top-tier engagement window in the aggregate scan, just behind Thursday's dominant slot.", "why_hook": "Duet/stitch bait turns a passive viewer into a participant \u2014 the closest on-platform analog to a share, which drove 94% of the dataset's top performers."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T11:00:00-04:00", "format": "Opinion", "hint": "News juxtaposition \u2014 Put a relevant headline on screen while a thematically connected section of the song plays underneath.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sat late-morning is one of the most consistently recurring high-engagement windows across the scan.", "why_hook": "Pairs a pattern-interrupt (an unexpected headline) with self-relevance to a live event \u2014 a proven combination from the first-3-seconds hook research."}, {"slot_id": "2026-09-19-Verse", "datetime": "2026-09-19T14:00:00-04:00", "format": "Verse", "hint": "Two meanings \u2014 Put a lyric with two meanings on screen, play the section with no explanation, and let the comments debate it.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sat afternoon is one of four recurring Saturday high-engagement windows the aggregate scan turned up.", "why_hook": "A curiosity-gap hook (unexplained ambiguity) reliably sparks comment debate \u2014 the hip-hop-specific mining pass found comment-drawing formats sustain engagement."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T17:00:00-04:00", "format": "Opinion", "hint": "\u201cI can't believe I wrote this\u201d \u2014 React on camera to one of your older bars, whether it's great, embarrassing, or oddly prophetic.", "viral_score": 82, "viral_label": "High", "viral_band": "high", "why_timing": "Sat 5pm ET recurs alongside the late-morning and afternoon Saturday windows in the aggregate scan.", "why_hook": "A vulnerable, personal moment on camera \u2014 the shares-psychology research's core driver \u2014 paired with a natural, unforced intro into your own catalog."}, {"slot_id": "2026-09-20-BTS", "datetime": "2026-09-20T23:00:00-04:00", "format": "BTS", "hint": "Dry vocal \u2192 finished vocal \u2014 Start on a totally dry vocal take, then switch to the full vocal chain and mix \u2014 make the before/after obvious.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sun 11pm ET is a recurring late-night window in the scan, present but slightly less dominant than the Thu/Sat windows.", "why_hook": "A blunt before/after payoff is a strong curiosity-to-resolution hook, and a dry-vocal contrast is instantly legible \u2014 even to non-musicians."}]</script>
@@ -255,6 +420,438 @@
     });
   }
 
+  // ---- In-browser video editor (ffmpeg.wasm) ----
+  // Everything below runs entirely on-device: clips, music, and the export
+  // never leave the browser or hit a network request except the one-time
+  // (cached) download of the ffmpeg engine itself and a caption font.
+  var FONT_URL = "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf";
+  var CORE_BASE_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+  var _ffmpegPromise = null;
+  var _fontLoaded = false;
+
+  function toBlobURL(url, mimeType) {
+    return fetch(url)
+      .then(function (r) { return r.arrayBuffer(); })
+      .then(function (buf) { return URL.createObjectURL(new Blob([buf], { type: mimeType })); });
+  }
+  function fetchFileBytes(fileOrUrl) {
+    if (typeof fileOrUrl === "string") {
+      return fetch(fileOrUrl).then(function (r) { return r.arrayBuffer(); }).then(function (b) { return new Uint8Array(b); });
+    }
+    return fileOrUrl.arrayBuffer().then(function (b) { return new Uint8Array(b); });
+  }
+
+  function getFFmpeg(onLog) {
+    if (_ffmpegPromise) return _ffmpegPromise;
+    _ffmpegPromise = Promise.resolve().then(function () {
+      var ffmpeg = new FFmpegWASM.FFmpeg();
+      ffmpeg.on("log", function (e) { if (onLog) onLog(e.message); });
+      return Promise.all([
+        toBlobURL(CORE_BASE_URL + "/ffmpeg-core.js", "text/javascript"),
+        toBlobURL(CORE_BASE_URL + "/ffmpeg-core.wasm", "application/wasm"),
+      ]).then(function (urls) {
+        return ffmpeg.load({ coreURL: urls[0], wasmURL: urls[1] }).then(function () { return ffmpeg; });
+      });
+    });
+    return _ffmpegPromise;
+  }
+
+  function escapeDrawtext(text) {
+    return String(text || "")
+      .replace(/\/g, "\\\\")
+      .replace(/:/g, "\:")
+      .replace(/'/g, "’");
+  }
+  function yExprFor(position) {
+    if (position === "top") return "h*0.08";
+    if (position === "middle") return "(h-text_h)/2";
+    return "h*0.82-text_h";
+  }
+  function escapeHtml(s) {
+    var d = document.createElement("div");
+    d.textContent = String(s || "");
+    return d.innerHTML.replace(/"/g, "&quot;");
+  }
+
+  // Runs the actual edit: per-take trim+normalize, concat, drawtext
+  // captions, then audio mute/mix -- each stage only runs if needed.
+  async function runExport(session, onProgress, onLog) {
+    onProgress(0, "Loading video engine (first time only, ~9MB)…");
+    var ffmpeg = await getFFmpeg(onLog);
+    ffmpeg.on("progress", function (p) {
+      onProgress(Math.max(0, Math.min(100, Math.round((p.progress || 0) * 100))));
+    });
+
+    var segNames = [];
+    for (var i = 0; i < session.takes.length; i++) {
+      var take = session.takes[i];
+      var inName = "in" + i + ".mp4";
+      var outName = "seg" + i + ".mp4";
+      await ffmpeg.writeFile(inName, await fetchFileBytes(take.file));
+      var start = Math.max(0, take.start || 0);
+      var end = take.end > start ? take.end : take.duration;
+      var args = ["-i", inName];
+      if (start > 0) args.push("-ss", String(start));
+      args.push("-to", String(end));
+      args.push(
+        "-vf", "scale=720:-2,fps=30",
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+        "-c:a", "aac", "-ar", "44100", "-ac", "2",
+        "-movflags", "+faststart", outName
+      );
+      onProgress(Math.round(5 + (i / session.takes.length) * 30), "Processing take " + (i + 1) + " of " + session.takes.length + "…");
+      await ffmpeg.exec(args);
+      segNames.push(outName);
+    }
+
+    var combined = segNames[0];
+    if (segNames.length > 1) {
+      onProgress(38, "Combining takes…");
+      var listContent = segNames.map(function (n) { return "file '" + n + "'"; }).join("
+");
+      await ffmpeg.writeFile("list.txt", new TextEncoder().encode(listContent));
+      combined = "combined.mp4";
+      await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c", "copy", combined]);
+    }
+
+    var withCaptions = combined;
+    var validCaptions = session.overlays.filter(function (o) { return (o.text || "").trim().length > 0 && o.end > o.start; });
+    if (validCaptions.length > 0) {
+      onProgress(55, "Adding captions…");
+      if (!_fontLoaded) {
+        await ffmpeg.writeFile("font.ttf", await fetchFileBytes(FONT_URL));
+        _fontLoaded = true;
+      }
+      var filters = validCaptions.map(function (o) {
+        return "drawtext=fontfile=font.ttf:text='" + escapeDrawtext(o.text) + "':fontsize=44:fontcolor=white:" +
+          "borderw=3:bordercolor=black@0.8:x=(w-text_w)/2:y=" + yExprFor(o.position) +
+          ":enable='between(t\," + o.start + "\," + o.end + ")'";
+      }).join(",");
+      withCaptions = "captioned.mp4";
+      await ffmpeg.exec(["-i", combined, "-vf", filters, "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23", "-c:a", "copy", withCaptions]);
+    }
+
+    var finalName = withCaptions;
+    if (session.muteOriginal || session.musicFile) {
+      onProgress(80, "Mixing audio…");
+      finalName = "final.mp4";
+      if (session.musicFile) {
+        var musicExt = (session.musicFile.name.split(".").pop() || "mp3").toLowerCase();
+        var musicName = "music." + musicExt;
+        await ffmpeg.writeFile(musicName, await fetchFileBytes(session.musicFile));
+        if (session.muteOriginal) {
+          await ffmpeg.exec(["-i", withCaptions, "-i", musicName, "-map", "0:v", "-map", "1:a",
+            "-c:v", "copy", "-c:a", "aac", "-shortest", finalName]);
+        } else {
+          var vol = session.musicVolume != null ? session.musicVolume : 0.5;
+          await ffmpeg.exec(["-i", withCaptions, "-i", musicName, "-filter_complex",
+            "[1:a]volume=" + vol + "[m];[0:a][m]amix=inputs=2:duration=first:dropout_transition=2[aout]",
+            "-map", "0:v", "-map", "[aout]", "-c:v", "copy", "-c:a", "aac", finalName]);
+        }
+      } else {
+        await ffmpeg.exec(["-i", withCaptions, "-c:v", "copy", "-an", finalName]);
+      }
+    }
+
+    onProgress(96, "Finishing…");
+    var data = await ffmpeg.readFile(finalName);
+    onProgress(100, "Done.");
+    return new Blob([data.buffer], { type: "video/mp4" });
+  }
+
+  // ---- Editor modal UI ----
+  var editorOverlay = document.getElementById("editor-overlay");
+  var editorTitle = document.getElementById("editor-title");
+  var editSections = document.getElementById("editor-edit-sections");
+  var takesEl = document.getElementById("editor-takes");
+  var addTakeBtn = document.getElementById("editor-add-take");
+  var takeInput = document.getElementById("editor-take-input");
+  var timelineInfo = document.getElementById("editor-timeline-info");
+  var captionsEl = document.getElementById("editor-captions");
+  var addCaptionBtn = document.getElementById("editor-add-caption");
+  var muteCb = document.getElementById("editor-mute");
+  var musicRow = document.getElementById("editor-music-row");
+  var addMusicBtn = document.getElementById("editor-add-music");
+  var musicInput = document.getElementById("editor-music-input");
+  var statusEl = document.getElementById("editor-status");
+  var progressWrap = document.getElementById("editor-progress");
+  var progressFill = document.getElementById("editor-progress-fill");
+  var logToggle = document.getElementById("editor-log-toggle");
+  var logEl = document.getElementById("editor-log");
+  var reviewEl = document.getElementById("editor-review");
+  var reviewVideo = document.getElementById("editor-review-video");
+  var footerEl = document.getElementById("editor-footer");
+  var reviewFooterEl = document.getElementById("editor-review-footer");
+  var cancelBtn = document.getElementById("editor-cancel");
+  var exportBtn = document.getElementById("editor-export");
+  var redoBtn = document.getElementById("editor-redo");
+  var useBtn = document.getElementById("editor-use");
+  var closeBtn = document.getElementById("editor-close");
+
+  var session = null;
+  var currentOnUse = null;
+  var currentFinalBlob = null;
+
+  function readVideoDuration(url) {
+    return new Promise(function (resolve) {
+      var v = document.createElement("video");
+      v.preload = "metadata";
+      v.src = url;
+      v.addEventListener("loadedmetadata", function () { resolve(v.duration || 0); });
+      v.addEventListener("error", function () { resolve(0); });
+    });
+  }
+
+  function combinedDuration() {
+    return session.takes.reduce(function (sum, t) { return sum + Math.max(0, t.end - t.start); }, 0);
+  }
+  function updateTimelineInfo() {
+    timelineInfo.textContent = "Combined length so far: " + combinedDuration().toFixed(1) + "s";
+  }
+
+  function addTake(file) {
+    var url = URL.createObjectURL(file);
+    readVideoDuration(url).then(function (duration) {
+      session.takes.push({ file: file, url: url, duration: duration, start: 0, end: duration });
+      renderTakes();
+    });
+  }
+
+  function renderTakes() {
+    takesEl.innerHTML = "";
+    session.takes.forEach(function (take, i) {
+      var row = document.createElement("div");
+      row.className = "take-row";
+      row.dataset.idx = i;
+      row.innerHTML =
+        '<video class="take-preview" src="' + take.url + '" controls playsinline muted></video>' +
+        '<div class="take-controls">' +
+        '<div class="take-meta">Take ' + (i + 1) + ' · ' + take.duration.toFixed(1) + 's</div>' +
+        '<div class="take-trim">' +
+        '<label>In <input type="number" class="take-start" step="0.1" min="0" value="' + take.start.toFixed(1) + '"></label>' +
+        '<button type="button" class="take-set-in">Set</button>' +
+        '<label>Out <input type="number" class="take-end" step="0.1" min="0" value="' + take.end.toFixed(1) + '"></label>' +
+        '<button type="button" class="take-set-out">Set</button>' +
+        '</div>' +
+        '<div class="take-actions">' +
+        (i > 0 ? '<button type="button" class="take-up">↑</button>' : "") +
+        (i < session.takes.length - 1 ? '<button type="button" class="take-down">↓</button>' : "") +
+        '<button type="button" class="take-delete">Delete</button>' +
+        '</div></div>';
+      takesEl.appendChild(row);
+    });
+    updateTimelineInfo();
+  }
+
+  takesEl.addEventListener("click", function (e) {
+    var row = e.target.closest(".take-row");
+    if (!row) return;
+    var idx = Number(row.dataset.idx);
+    if (e.target.classList.contains("take-delete")) {
+      URL.revokeObjectURL(session.takes[idx].url);
+      session.takes.splice(idx, 1);
+      renderTakes();
+    } else if (e.target.classList.contains("take-up") && idx > 0) {
+      var a = session.takes[idx - 1]; session.takes[idx - 1] = session.takes[idx]; session.takes[idx] = a;
+      renderTakes();
+    } else if (e.target.classList.contains("take-down") && idx < session.takes.length - 1) {
+      var b = session.takes[idx + 1]; session.takes[idx + 1] = session.takes[idx]; session.takes[idx] = b;
+      renderTakes();
+    } else if (e.target.classList.contains("take-set-in")) {
+      var vid = row.querySelector(".take-preview");
+      session.takes[idx].start = Math.min(vid.currentTime, session.takes[idx].end);
+      renderTakes();
+    } else if (e.target.classList.contains("take-set-out")) {
+      var vid2 = row.querySelector(".take-preview");
+      session.takes[idx].end = Math.max(vid2.currentTime, session.takes[idx].start);
+      renderTakes();
+    }
+  });
+  takesEl.addEventListener("change", function (e) {
+    var row = e.target.closest(".take-row");
+    if (!row) return;
+    var idx = Number(row.dataset.idx);
+    if (e.target.classList.contains("take-start")) session.takes[idx].start = parseFloat(e.target.value) || 0;
+    if (e.target.classList.contains("take-end")) session.takes[idx].end = parseFloat(e.target.value) || session.takes[idx].duration;
+    updateTimelineInfo();
+  });
+  addTakeBtn.addEventListener("click", function () { takeInput.click(); });
+  takeInput.addEventListener("change", function () {
+    var f = takeInput.files[0];
+    takeInput.value = "";
+    if (f) addTake(f);
+  });
+
+  function renderCaptions() {
+    captionsEl.innerHTML = "";
+    session.overlays.forEach(function (ov, i) {
+      var row = document.createElement("div");
+      row.className = "caption-row";
+      row.dataset.idx = i;
+      row.innerHTML =
+        '<input type="text" class="caption-text" placeholder="Caption text" value="' + escapeHtml(ov.text) + '">' +
+        '<div class="caption-timing">' +
+        '<label>Start <input type="number" class="caption-start" step="0.1" min="0" value="' + ov.start.toFixed(1) + '"></label>' +
+        '<label>End <input type="number" class="caption-end" step="0.1" min="0" value="' + ov.end.toFixed(1) + '"></label>' +
+        '<select class="caption-pos">' +
+        '<option value="top"' + (ov.position === "top" ? " selected" : "") + '>Top</option>' +
+        '<option value="middle"' + (ov.position === "middle" ? " selected" : "") + '>Middle</option>' +
+        '<option value="bottom"' + (ov.position === "bottom" ? " selected" : "") + '>Bottom</option>' +
+        '</select>' +
+        '<button type="button" class="caption-delete">✕</button>' +
+        '</div>';
+      captionsEl.appendChild(row);
+    });
+  }
+  captionsEl.addEventListener("click", function (e) {
+    var row = e.target.closest(".caption-row");
+    if (!row) return;
+    var idx = Number(row.dataset.idx);
+    if (e.target.classList.contains("caption-delete")) {
+      session.overlays.splice(idx, 1);
+      renderCaptions();
+    }
+  });
+  captionsEl.addEventListener("input", function (e) {
+    var row = e.target.closest(".caption-row");
+    if (!row) return;
+    var idx = Number(row.dataset.idx);
+    if (e.target.classList.contains("caption-text")) session.overlays[idx].text = e.target.value;
+  });
+  captionsEl.addEventListener("change", function (e) {
+    var row = e.target.closest(".caption-row");
+    if (!row) return;
+    var idx = Number(row.dataset.idx);
+    if (e.target.classList.contains("caption-start")) session.overlays[idx].start = parseFloat(e.target.value) || 0;
+    if (e.target.classList.contains("caption-end")) session.overlays[idx].end = parseFloat(e.target.value) || 0;
+    if (e.target.classList.contains("caption-pos")) session.overlays[idx].position = e.target.value;
+  });
+  addCaptionBtn.addEventListener("click", function () {
+    var dur = combinedDuration() || 3;
+    session.overlays.push({ text: "", start: 0, end: Math.min(3, dur), position: "bottom" });
+    renderCaptions();
+  });
+
+  function renderMusic() {
+    if (session.musicFile) {
+      musicRow.innerHTML =
+        '<span class="music-name">🎵 ' + escapeHtml(session.musicFile.name) + '</span>' +
+        '<input type="range" class="music-volume" min="0" max="100" value="' + Math.round((session.musicVolume || 0.5) * 100) + '">' +
+        '<button type="button" class="music-remove">Remove</button>';
+      addMusicBtn.hidden = true;
+    } else {
+      musicRow.innerHTML = "";
+      addMusicBtn.hidden = false;
+    }
+  }
+  musicRow.addEventListener("click", function (e) {
+    if (e.target.classList.contains("music-remove")) {
+      session.musicFile = null;
+      renderMusic();
+    }
+  });
+  musicRow.addEventListener("input", function (e) {
+    if (e.target.classList.contains("music-volume")) session.musicVolume = Number(e.target.value) / 100;
+  });
+  addMusicBtn.addEventListener("click", function () { musicInput.click(); });
+  musicInput.addEventListener("change", function () {
+    var f = musicInput.files[0];
+    musicInput.value = "";
+    if (!f) return;
+    session.musicFile = f;
+    session.musicVolume = session.musicVolume || 0.5;
+    renderMusic();
+  });
+  muteCb.addEventListener("change", function () { session.muteOriginal = muteCb.checked; });
+
+  function resetEditorUI() {
+    statusEl.textContent = "";
+    progressWrap.hidden = true;
+    progressFill.style.width = "0%";
+    logEl.hidden = true; logEl.textContent = "";
+    logToggle.hidden = true;
+    logToggle.textContent = "Show technical log";
+    reviewEl.hidden = true;
+    editSections.hidden = false;
+    footerEl.hidden = false;
+    reviewFooterEl.hidden = true;
+    exportBtn.disabled = false;
+    cancelBtn.disabled = false;
+  }
+
+  function openEditor(slot, initialFile, onUse) {
+    session = { takes: [], overlays: [], muteOriginal: false, musicFile: null, musicVolume: 0.5 };
+    currentOnUse = onUse;
+    currentFinalBlob = null;
+    editorTitle.textContent = slot.format + " — " + formatWhen(slot.datetime);
+    muteCb.checked = false;
+    renderTakes();
+    renderCaptions();
+    renderMusic();
+    resetEditorUI();
+    editorOverlay.hidden = false;
+    document.body.style.overflow = "hidden";
+    addTake(initialFile);
+  }
+
+  function closeEditor() {
+    editorOverlay.hidden = true;
+    document.body.style.overflow = "";
+    if (session) session.takes.forEach(function (t) { URL.revokeObjectURL(t.url); });
+    session = null;
+  }
+
+  closeBtn.addEventListener("click", function () {
+    if (!reviewFooterEl.hidden || confirm("Discard this edit?")) closeEditor();
+  });
+  cancelBtn.addEventListener("click", function () {
+    if (confirm("Discard this edit?")) closeEditor();
+  });
+  redoBtn.addEventListener("click", function () {
+    reviewEl.hidden = true;
+    editSections.hidden = false;
+    footerEl.hidden = false;
+    reviewFooterEl.hidden = true;
+  });
+  useBtn.addEventListener("click", function () {
+    var blob = currentFinalBlob;
+    var cb = currentOnUse;
+    closeEditor();
+    if (blob && cb) cb(blob);
+  });
+  logToggle.addEventListener("click", function () {
+    logEl.hidden = !logEl.hidden;
+    logToggle.textContent = logEl.hidden ? "Show technical log" : "Hide technical log";
+  });
+
+  exportBtn.addEventListener("click", function () {
+    if (!session.takes.length) { statusEl.textContent = "Add at least one take first."; return; }
+    exportBtn.disabled = true;
+    cancelBtn.disabled = true;
+    progressWrap.hidden = false;
+    logToggle.hidden = false;
+
+    runExport(
+      session,
+      function (pct, msg) { progressFill.style.width = pct + "%"; if (msg) statusEl.textContent = msg; },
+      function (line) { logEl.textContent += line + "
+"; logEl.scrollTop = logEl.scrollHeight; }
+    ).then(function (blob) {
+      currentFinalBlob = blob;
+      reviewVideo.src = URL.createObjectURL(blob);
+      editSections.hidden = true;
+      footerEl.hidden = true;
+      reviewEl.hidden = false;
+      reviewFooterEl.hidden = false;
+      statusEl.textContent = "Done.";
+    }).catch(function (err) {
+      statusEl.textContent = "Export failed: " + (err && err.message ? err.message : String(err)) + " — tap “Show technical log” and send it to Claude.";
+    }).finally(function () {
+      exportBtn.disabled = false;
+      cancelBtn.disabled = false;
+    });
+  });
+
   var slots = JSON.parse(document.getElementById("slot-data").textContent);
   var container = document.getElementById("slots");
 
@@ -290,7 +887,7 @@
       '</div>' +
       '<video class="preview-video" controls playsinline hidden></video>' +
       '<textarea placeholder="Caption / notes…"></textarea>' +
-      '<p class="caption-note">Filename uses whatever’s in this box when you tap the camera button above. The thumbnail/preview is stored only in this browser — never uploaded anywhere.</p>' +
+      '<p class="caption-note">Recording opens the editor to trim, caption, and combine takes before it downloads — filename uses whatever’s in this box when you tap “Use this.” Everything (clips, thumbnail, preview) stays in this browser only.</p>' +
       '<div class="checks">' +
       '<label><input type="checkbox" class="filmed-cb"> Filmed</label>' +
       '<label><input type="checkbox" class="posted-cb"> Posted</label>' +
@@ -348,11 +945,12 @@
       safeSet(postedKey, postedCb.checked ? "1" : "0");
     });
 
-    // Must fire synchronously inside this event handler (no await/timeout
-    // before .click()) -- iOS Safari silently drops the download otherwise.
-    fileInput.addEventListener("change", function () {
-      var file = fileInput.files[0];
-      if (!file) return;
+    // Called with the FINAL (edited) clip once the user taps "Use this" in
+    // the editor. Must fire the download synchronously inside that click
+    // handler (no await/timeout before .click()) -- iOS Safari silently
+    // drops the download otherwise; this function itself has no awaits
+    // before the click(), so it's safe to call directly from that handler.
+    function finalizeClip(file) {
       var filename = buildFilename(slot.format, textarea.value, slot.datetime);
       fileStatus.textContent = "Saved as " + filename;
       var url = URL.createObjectURL(file);
@@ -378,6 +976,13 @@
           el.classList.add("done");
         }
       }).catch(function () {});
+    }
+
+    fileInput.addEventListener("change", function () {
+      var file = fileInput.files[0];
+      fileInput.value = "";
+      if (!file) return;
+      openEditor(slot, file, finalizeClip);
     });
 
     container.appendChild(el);
