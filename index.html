@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Weekly Filming Checklist</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#06070c">
 <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js"></script>
 <style>
   :root {
@@ -55,6 +60,23 @@
   .research ul { margin: 0; padding-left: 18px; }
   .research li { font-size: 12.5px; color: var(--text-dim); margin-bottom: 4px; }
   .research li:last-child { margin-bottom: 0; color: var(--text-faint); font-style: italic; }
+
+  .notify-panel {
+    border: 1px solid var(--border); border-radius: 16px;
+    background: linear-gradient(160deg, var(--panel), var(--panel-2));
+    padding: 12px 16px; margin: 0 0 22px;
+  }
+  .notify-row { display: flex; align-items: center; gap: 10px; }
+  .notify-icon { font-size: 16px; }
+  .notify-text { flex: 1; font-size: 12.5px; color: var(--text-dim); }
+  .notify-btn {
+    font: 700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 7px 14px; border-radius: 999px; cursor: pointer; border: 1px solid rgba(53,230,255,.4);
+    background: linear-gradient(90deg, var(--cyan), var(--violet)); color: #05060a;
+  }
+  .notify-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .notify-btn.is-on { background: transparent; color: var(--text-dim); border-color: var(--border); }
+  .notify-note { font-size: 11.5px; color: var(--text-faint); margin: 8px 0 0; }
 
   .slot {
     border: 1px solid var(--border); border-radius: 20px; padding: 18px;
@@ -266,6 +288,15 @@
     <ul><li>51% of top-performing videos in the dataset scan ran ≤15 seconds — short-form dominates.</li><li>94% of top-performing videos were driven primarily by shares, not likes or comments.</li><li>Estimates come from a static historical dataset (Feb 2024–Mar 2025 snapshot) — directional, not a guarantee, and blind to current trends.</li></ul>
   </div>
 
+  <div class="notify-panel">
+    <div class="notify-row">
+      <span class="notify-icon">🔔</span>
+      <span class="notify-text" id="notify-text">Get a reminder ~30 min before each slot</span>
+      <button type="button" class="notify-btn" id="notify-btn">Enable</button>
+    </div>
+    <p class="notify-note" id="notify-note" hidden></p>
+  </div>
+
   <div id="slots"></div>
 
   <div class="editor-overlay" id="editor-overlay" hidden>
@@ -315,7 +346,7 @@
     </div>
   </div>
 
-  <footer>Generated 2026-09-10 00:22 PDT</footer>
+  <footer>Generated 2026-09-10 09:32 PDT</footer>
 </div>
 
 <script id="slot-data" type="application/json">[{"slot_id": "2026-09-17-Verse", "datetime": "2026-09-17T17:00:00-04:00", "format": "Verse", "hint": "One breath challenge \u2014 Perform a dense sequence and ask viewers where you took a breath, or whether they could do it in one.", "viral_score": 87, "viral_label": "High", "viral_band": "high", "why_timing": "Thu 5pm ET is the single strongest window in the full dataset scan, outperforming every other slot by more than the 10% tie-break margin.", "why_hook": "Skill display plus a direct question creates a pattern-interrupt hook and pulls comments \u2014 the #2 engagement signal behind shares in the dataset scan."}, {"slot_id": "2026-09-18-Verse", "datetime": "2026-09-18T17:00:00-04:00", "format": "Verse", "hint": "\u201cCould you rap this?\u201d \u2014 Post an instrumental or section with scrolling lyrics/rhythm markers and invite people to duet or stitch it.", "viral_score": 85, "viral_label": "High", "viral_band": "high", "why_timing": "Fri 4\u20136pm ET recurs as a top-tier engagement window in the aggregate scan, just behind Thursday's dominant slot.", "why_hook": "Duet/stitch bait turns a passive viewer into a participant \u2014 the closest on-platform analog to a share, which drove 94% of the dataset's top performers."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T11:00:00-04:00", "format": "Opinion", "hint": "News juxtaposition \u2014 Put a relevant headline on screen while a thematically connected section of the song plays underneath.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sat late-morning is one of the most consistently recurring high-engagement windows across the scan.", "why_hook": "Pairs a pattern-interrupt (an unexpected headline) with self-relevance to a live event \u2014 a proven combination from the first-3-seconds hook research."}, {"slot_id": "2026-09-19-Verse", "datetime": "2026-09-19T14:00:00-04:00", "format": "Verse", "hint": "Two meanings \u2014 Put a lyric with two meanings on screen, play the section with no explanation, and let the comments debate it.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sat afternoon is one of four recurring Saturday high-engagement windows the aggregate scan turned up.", "why_hook": "A curiosity-gap hook (unexplained ambiguity) reliably sparks comment debate \u2014 the hip-hop-specific mining pass found comment-drawing formats sustain engagement."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T17:00:00-04:00", "format": "Opinion", "hint": "\u201cI can't believe I wrote this\u201d \u2014 React on camera to one of your older bars, whether it's great, embarrassing, or oddly prophetic.", "viral_score": 82, "viral_label": "High", "viral_band": "high", "why_timing": "Sat 5pm ET recurs alongside the late-morning and afternoon Saturday windows in the aggregate scan.", "why_hook": "A vulnerable, personal moment on camera \u2014 the shares-psychology research's core driver \u2014 paired with a natural, unforced intro into your own catalog."}, {"slot_id": "2026-09-20-BTS", "datetime": "2026-09-20T23:00:00-04:00", "format": "BTS", "hint": "Dry vocal \u2192 finished vocal \u2014 Start on a totally dry vocal take, then switch to the full vocal chain and mix \u2014 make the before/after obvious.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sun 11pm ET is a recurring late-night window in the scan, present but slightly less dominant than the Thu/Sat windows.", "why_hook": "A blunt before/after payoff is a strong curiosity-to-resolution hook, and a dry-vocal contrast is instantly legible \u2014 even to non-musicians."}]</script>
@@ -344,6 +375,117 @@
       hour: "numeric", minute: "2-digit",
       timeZone: "America/Los_Angeles", timeZoneName: "short"
     });
+  }
+
+  // ---- Push notifications ----
+  // Real Web Push needs a service worker plus a backend that actually sends
+  // the message at the right time (this static page can't do that itself --
+  // see the Modal `check_upcoming_slots` cron job). On iPhone specifically,
+  // Apple only allows push for a page that's been added to the Home Screen
+  // and opened from there, not from an ordinary Safari tab -- nothing here
+  // can work around that, so the button below detects it and says so.
+  var VAPID_PUBLIC_KEY = "BARgRevZ3I9q-X2LU295z60NoTpcq1K9mpKckv6XVXjaQ4hPe_cERAa1Uh-O6lN9VoUSrsQ1FCOeA8suwWLt61E";
+  var SAVE_SUBSCRIPTION_URL = "https://caseyw721--tiktok-schedule-optimizer-save-subscription.modal.run";
+
+  var notifyBtn = document.getElementById("notify-btn");
+  var notifyText = document.getElementById("notify-text");
+  var notifyNote = document.getElementById("notify-note");
+
+  function urlBase64ToUint8Array(base64String) {
+    var padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    var base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    var raw = atob(base64);
+    var arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+
+  function isIosNotStandalone() {
+    var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    var isStandalone = window.navigator.standalone === true ||
+      window.matchMedia("(display-mode: standalone)").matches;
+    return isIos && !isStandalone;
+  }
+
+  function setNotifyUI(on) {
+    notifyBtn.textContent = on ? "On" : "Enable";
+    notifyBtn.classList.toggle("is-on", on);
+    notifyText.textContent = on
+      ? "Reminders are on — ~30 min before each slot"
+      : "Get a reminder ~30 min before each slot";
+  }
+
+  function postSubscription(sub, unsubscribe) {
+    var body = sub.toJSON ? sub.toJSON() : sub;
+    if (unsubscribe) body.unsubscribe = true;
+    return fetch(SAVE_SUBSCRIPTION_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  function refreshNotifyState() {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      notifyBtn.hidden = true;
+      notifyText.textContent = "Push notifications aren’t supported in this browser.";
+      return;
+    }
+    navigator.serviceWorker.register("sw.js")
+      .then(function (reg) { return reg.pushManager.getSubscription(); })
+      .then(function (sub) { setNotifyUI(!!sub); })
+      .catch(function () { setNotifyUI(false); });
+  }
+
+  if (notifyBtn) {
+    notifyBtn.addEventListener("click", function () {
+      if (isIosNotStandalone()) {
+        notifyNote.hidden = false;
+        notifyNote.textContent = "On iPhone, notifications only work once this page is added to your Home Screen: tap the Share button, then “Add to Home Screen,” then open it from there and tap Enable again.";
+        return;
+      }
+      if (typeof Notification !== "undefined" && Notification.permission === "denied") {
+        notifyNote.hidden = false;
+        notifyNote.textContent = "Notifications are blocked for this site in your phone/browser settings — enable them there first.";
+        return;
+      }
+
+      notifyBtn.disabled = true;
+      navigator.serviceWorker.register("sw.js").then(function (reg) {
+        return reg.pushManager.getSubscription().then(function (existing) {
+          if (existing) {
+            return existing.unsubscribe()
+              .then(function () { return postSubscription(existing, true); })
+              .then(function () { setNotifyUI(false); });
+          }
+          return Notification.requestPermission().then(function (perm) {
+            if (perm !== "granted") {
+              notifyNote.hidden = false;
+              notifyNote.textContent = "Notification permission was not granted.";
+              setNotifyUI(false);
+              return;
+            }
+            return reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+            }).then(function (newSub) {
+              return postSubscription(newSub, false);
+            }).then(function () {
+              notifyNote.hidden = true;
+              setNotifyUI(true);
+            });
+          });
+        });
+      }).catch(function (err) {
+        notifyNote.hidden = false;
+        notifyNote.textContent = "Couldn’t enable notifications: " + (err && err.message ? err.message : err);
+        setNotifyUI(false);
+      }).finally(function () {
+        notifyBtn.disabled = false;
+      });
+    });
+
+    refreshNotifyState();
   }
 
   var FMT_CLASS = { "Verse": "fmt-verse", "Opinion": "fmt-opinion", "BTS": "fmt-bts" };
