@@ -162,7 +162,7 @@
   footer { text-align: center; font-size: 11px; color: var(--text-faint); margin-top: 30px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
   /* Editor modal */
-  .editor-overlay {
+  .editor-overlay:not([hidden]) {
     position: fixed; inset: 0; z-index: 100;
     background: rgba(4,5,9,.85); backdrop-filter: blur(4px);
     display: flex; align-items: flex-end; justify-content: center;
@@ -346,7 +346,7 @@
     </div>
   </div>
 
-  <footer>Generated 2026-09-10 09:32 PDT</footer>
+  <footer>Generated 2026-09-11 09:39 PDT</footer>
 </div>
 
 <script id="slot-data" type="application/json">[{"slot_id": "2026-09-17-Verse", "datetime": "2026-09-17T17:00:00-04:00", "format": "Verse", "hint": "One breath challenge \u2014 Perform a dense sequence and ask viewers where you took a breath, or whether they could do it in one.", "viral_score": 87, "viral_label": "High", "viral_band": "high", "why_timing": "Thu 5pm ET is the single strongest window in the full dataset scan, outperforming every other slot by more than the 10% tie-break margin.", "why_hook": "Skill display plus a direct question creates a pattern-interrupt hook and pulls comments \u2014 the #2 engagement signal behind shares in the dataset scan."}, {"slot_id": "2026-09-18-Verse", "datetime": "2026-09-18T17:00:00-04:00", "format": "Verse", "hint": "\u201cCould you rap this?\u201d \u2014 Post an instrumental or section with scrolling lyrics/rhythm markers and invite people to duet or stitch it.", "viral_score": 85, "viral_label": "High", "viral_band": "high", "why_timing": "Fri 4\u20136pm ET recurs as a top-tier engagement window in the aggregate scan, just behind Thursday's dominant slot.", "why_hook": "Duet/stitch bait turns a passive viewer into a participant \u2014 the closest on-platform analog to a share, which drove 94% of the dataset's top performers."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T11:00:00-04:00", "format": "Opinion", "hint": "News juxtaposition \u2014 Put a relevant headline on screen while a thematically connected section of the song plays underneath.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sat late-morning is one of the most consistently recurring high-engagement windows across the scan.", "why_hook": "Pairs a pattern-interrupt (an unexpected headline) with self-relevance to a live event \u2014 a proven combination from the first-3-seconds hook research."}, {"slot_id": "2026-09-19-Verse", "datetime": "2026-09-19T14:00:00-04:00", "format": "Verse", "hint": "Two meanings \u2014 Put a lyric with two meanings on screen, play the section with no explanation, and let the comments debate it.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sat afternoon is one of four recurring Saturday high-engagement windows the aggregate scan turned up.", "why_hook": "A curiosity-gap hook (unexplained ambiguity) reliably sparks comment debate \u2014 the hip-hop-specific mining pass found comment-drawing formats sustain engagement."}, {"slot_id": "2026-09-19-Opinion", "datetime": "2026-09-19T17:00:00-04:00", "format": "Opinion", "hint": "\u201cI can't believe I wrote this\u201d \u2014 React on camera to one of your older bars, whether it's great, embarrassing, or oddly prophetic.", "viral_score": 82, "viral_label": "High", "viral_band": "high", "why_timing": "Sat 5pm ET recurs alongside the late-morning and afternoon Saturday windows in the aggregate scan.", "why_hook": "A vulnerable, personal moment on camera \u2014 the shares-psychology research's core driver \u2014 paired with a natural, unforced intro into your own catalog."}, {"slot_id": "2026-09-20-BTS", "datetime": "2026-09-20T23:00:00-04:00", "format": "BTS", "hint": "Dry vocal \u2192 finished vocal \u2014 Start on a totally dry vocal take, then switch to the full vocal chain and mix \u2014 make the before/after obvious.", "viral_score": 80, "viral_label": "High", "viral_band": "high", "why_timing": "Sun 11pm ET is a recurring late-night window in the scan, present but slightly less dominant than the Thu/Sat windows.", "why_hook": "A blunt before/after payoff is a strong curiosity-to-resolution hook, and a dry-vocal contrast is instantly legible \u2014 even to non-musicians."}]</script>
@@ -600,8 +600,8 @@
 
   function escapeDrawtext(text) {
     return String(text || "")
-      .replace(/\/g, "\\\\")
-      .replace(/:/g, "\:")
+      .replace(/\\/g, "\\\\")
+      .replace(/:/g, "\\:")
       .replace(/'/g, "’");
   }
   function yExprFor(position) {
@@ -649,8 +649,7 @@
     var combined = segNames[0];
     if (segNames.length > 1) {
       onProgress(38, "Combining takes…");
-      var listContent = segNames.map(function (n) { return "file '" + n + "'"; }).join("
-");
+      var listContent = segNames.map(function (n) { return "file '" + n + "'"; }).join("\n");
       await ffmpeg.writeFile("list.txt", new TextEncoder().encode(listContent));
       combined = "combined.mp4";
       await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c", "copy", combined]);
@@ -737,10 +736,19 @@
   function readVideoDuration(url) {
     return new Promise(function (resolve) {
       var v = document.createElement("video");
+      var done = false;
+      function finish(duration) {
+        if (done) return;
+        done = true;
+        resolve(duration);
+      }
       v.preload = "metadata";
       v.src = url;
-      v.addEventListener("loadedmetadata", function () { resolve(v.duration || 0); });
-      v.addEventListener("error", function () { resolve(0); });
+      v.addEventListener("loadedmetadata", function () { finish(v.duration || 0); });
+      v.addEventListener("error", function () { finish(0); });
+      // Some codec/container combos (e.g. HEVC .mov) never fire either event in Chrome --
+      // without this, addTake() hangs forever with no feedback (reproduced during debugging).
+      setTimeout(function () { finish(0); }, 8000);
     });
   }
 
@@ -976,8 +984,7 @@
     runExport(
       session,
       function (pct, msg) { progressFill.style.width = pct + "%"; if (msg) statusEl.textContent = msg; },
-      function (line) { logEl.textContent += line + "
-"; logEl.scrollTop = logEl.scrollHeight; }
+      function (line) { logEl.textContent += line + "\n"; logEl.scrollTop = logEl.scrollHeight; }
     ).then(function (blob) {
       currentFinalBlob = blob;
       reviewVideo.src = URL.createObjectURL(blob);
